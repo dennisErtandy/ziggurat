@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/gojekfarm/ziggurat/v2"
 	"net/http"
 	"net/url"
 	"sync"
 	"time"
+
+	"github.com/gojekfarm/ziggurat/v2"
 
 	zl "github.com/gojekfarm/ziggurat/v2/logger"
 	"github.com/makasim/amqpextra"
@@ -98,7 +99,7 @@ func (r *ARetry) publish(c context.Context, event *ziggurat.Event, queue string)
 		return err
 	}
 	defer r.publisherPool.put(pub)
-	err = publishInternal(pub, queue, r.queueConfig[queue].RetryCount, r.queueConfig[queue].DelayExpirationInMS, event)
+	err = publishInternal(pub, queue, r.queueConfig[queue].RetryCount, r.queueConfig[queue].DelayExpirationInMS, r.queueConfig[queue].RetryBackoffFunction, event)
 	return err
 }
 
