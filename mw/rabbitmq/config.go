@@ -1,6 +1,6 @@
 package rabbitmq
 
-type RetryBackoffFunction func(retryCount int) (delayExpiration string)
+type RetryBackoffFunction func(retryCount int) (string, error)
 
 type QueueConfig struct {
 	QueueKey              string

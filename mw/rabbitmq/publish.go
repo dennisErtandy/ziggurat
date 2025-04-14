@@ -18,7 +18,10 @@ func publishInternal(p amqpPublisher, queue string, retryCount int, delayExpirat
 		event.Metadata = map[string]interface{}{KeyRetryCount: 0}
 	}
 	if retryBackoffFunction != nil {
-		expiration = retryBackoffFunction(RetryCountFor(event))
+		backoffExpiration, err := retryBackoffFunction(RetryCountFor(event))
+		if err != nil {
+			expiration = backoffExpiration
+		}
 	}
 	newCount := RetryCountFor(event) + 1
 	exchange := fmt.Sprintf("%s_%s", queue, "exchange")
