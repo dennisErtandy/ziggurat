@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"encoding/json"
-	"errors"
 	"testing"
 
 	"github.com/gojekfarm/ziggurat/v2"
@@ -174,62 +173,10 @@ func Test_retry_backoff(t *testing.T) {
 		})
 	}
 }
-func Test_retry_backoff_error(t *testing.T) {
-
-	type test struct {
-		name              string
-		retryCount        int
-		expectedCount     int
-		event             ziggurat.Event
-		publishIterations int
-		WantMsg           publisher.Message
-	}
-
-	cases := []test{{
-		name:              "ARetry retry backoff",
-		retryCount:        1,
-		expectedCount:     1,
-		publishIterations: 1,
-		WantMsg: publisher.Message{
-			Exchange: "foo_exchange",
-			Key:      QueueTypeDelay,
-			Publishing: amqp.Publishing{
-				Expiration: "100",
-				Body: toJSON(ziggurat.Event{
-					Metadata: map[string]any{KeyRetryCount: 1},
-				}),
-				Headers: map[string]interface{}{"retry-origin": "ziggurat-go"},
-			},
-		},
-	}}
-
-	for _, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			p := mockAMQPPublisher{}
-			e := ziggurat.Event{}
-
-			for i := 0; i < c.publishIterations; i++ {
-				want := c.WantMsg
-				retryCount := i + 1
-				if retryCount > c.retryCount {
-					want.Key = QueueTypeDL
-					want.Publishing.Expiration = ""
-					retryCount = c.retryCount
-				}
-				want.Publishing.Body = toJSON(ziggurat.Event{Metadata: map[string]any{KeyRetryCount: retryCount}})
-				p.On("Publish", want).Return(nil).Once()
-				_ = publishInternal(&p, "foo", c.retryCount, "100", testBackoffFailed, &e)
-			}
-		})
-	}
-}
 func toJSON(v any) []byte {
 	bb, _ := json.Marshal(v)
 	return bb
 }
-func testBackoff(count int) (string, error) {
-	return "200", nil
-}
-func testBackoffFailed(count int) (string, error) {
-	return "", errors.New("failed to get backoff")
+func testBackoff(count int) string {
+	return "200"
 }
